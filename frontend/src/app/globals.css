@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-900 text-gray-100 antialiased;
+}
+
+a {
+  @apply text-blue-400 hover:text-blue-300;
+}
+
+/* Progress animation used by TransactionStatus */
+@keyframes slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(20%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+.animate-slide {
+  animation: slide 1.2s ease-in-out infinite;
+}
+
+

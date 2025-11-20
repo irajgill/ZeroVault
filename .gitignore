@@ -1,0 +1,2 @@
+node_modules/\ntarget/\n.env*\n*.ptau\n*.zkey\n*.wasm
+node_modules

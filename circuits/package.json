@@ -1,0 +1,15 @@
+{
+  "name": "zkdatavault-circuits",
+  "version": "1.0.0",
+  "description": "Zero-knowledge circuits for zkDataVault",
+  "scripts": {
+    "compile": "chmod +x scripts/compile.sh && ./scripts/compile.sh",
+    "setup": "chmod +x scripts/setup.sh && ./scripts/setup.sh",
+    "prove": "chmod +x scripts/prove.sh && ./scripts/prove.sh"
+  },
+  "dependencies": {
+    "circomlib": "^2.0.5",
+    "snarkjs": "^0.7.3"
+  },
+  "devDependencies": {}
+}

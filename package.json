@@ -1,0 +1,71 @@
+{
+  "name": "zkdatavault",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Privacy-first data marketplace with ZK proofs on Sui blockchain",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "circuits"
+  ],
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:*",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm-run-all build:*",
+    "build:contracts": "cd contracts && sui move build",
+    "build:circuits": "cd circuits && chmod +x scripts/setup.sh && ./scripts/setup.sh",
+    "build:backend": "npm run build --workspace=backend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "test": "npm-run-all test:*",
+    "test:contracts": "cd contracts && sui move test",
+    "test:backend": "npm run test --workspace=backend",
+    "test:frontend": "npm run test --workspace=frontend",
+    "deploy": "chmod +x scripts/deploy-with-zk.sh && ./scripts/deploy-with-zk.sh"
+  },
+  "devDependencies": {
+    "@types/react-dropzone": "^4.2.2",
+    "eslint": "^8.56.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.9",
+    "@mysten/dapp-kit": "^0.19.9",
+    "@mysten/sui": "^1.45.0",
+    "@mysten/wallet-standard": "^0.19.7",
+    "@tanstack/react-query": "^5.90.8",
+    "axios": "^1.13.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.553.0",
+    "react-dropzone": "^14.3.8",
+    "tailwind-merge": "^3.4.0"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

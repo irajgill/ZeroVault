@@ -1,0 +1,12 @@
+[package]
+name = "sui-vktool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ark-bn254 = "0.4"
+ark-groth16 = "0.4"
+ark-serialize = "0.4"

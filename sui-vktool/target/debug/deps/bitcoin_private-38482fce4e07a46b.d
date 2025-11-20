@@ -1,0 +1,10 @@
+/home/raj/zkDataVault/sui-vktool/target/debug/deps/bitcoin_private-38482fce4e07a46b.d: /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/lib.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/error.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/mod.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/buf_encoder.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/display.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/macros.rs
+
+/home/raj/zkDataVault/sui-vktool/target/debug/deps/libbitcoin_private-38482fce4e07a46b.rmeta: /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/lib.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/error.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/mod.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/buf_encoder.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/display.rs /home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/macros.rs
+
+/home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/lib.rs:
+/home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/error.rs:
+/home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/mod.rs:
+/home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/buf_encoder.rs:
+/home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/hex/display.rs:
+/home/raj/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bitcoin-private-0.1.0/src/macros.rs:
