@@ -42,7 +42,7 @@ router.get("/user/:address", asyncHandler(async (req: Request, res: Response) =>
 // is authorized to access the dataset (e.g. by verifying a prior purchase).
 router.post("/secure-download/:id", asyncHandler(async (req: Request, res: Response) => {
 	const { id } = req.params;
-	if (!id) throw new ValidationException("id is required");
+	if (!id) throw new ValidationError("id is required");
 	const recipientPublicKeyB64 = (req.body?.recipientPublicKeyB64 as string) || "";
 	if (!recipientPublicKeyB64) {
 		throw new ValidationError("recipientPublicKeyB64 is required (base64 32 bytes)");
@@ -60,6 +60,8 @@ router.post("/secure-download/:id", asyncHandler(async (req: Request, res: Respo
 	const wrapped = await wrapKeyForRecipient(ds.seal_policy_id, recipientPublicKeyB64);
 	return res.json({
 		blob_id: ds.blob_id,
+		original_filename: ds.original_filename || null,
+		content_type: ds.content_type || null,
 		nonce_b64: Buffer.from(nonce).toString("base64"),
 		ciphertext_b64: Buffer.from(ciphertext).toString("base64"),
 		wrapped_key: wrapped,

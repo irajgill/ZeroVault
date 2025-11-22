@@ -26,6 +26,8 @@ export async function uploadToWalrus(file: File): Promise<UploadResult> {
 
     const body = {
       file: base64,
+      originalFilename: file.name,
+      contentType: file.type || "application/octet-stream",
       metadata: {
         name: file.name || "dataset",
         description: `Uploaded via ZeroVault (${new Date().toISOString()})`,

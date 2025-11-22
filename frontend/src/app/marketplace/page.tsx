@@ -9,9 +9,10 @@ import useSui from "@/hooks/useSui";
 import { CONTRACT_IDS, PLATFORM_TREASURY } from "@/constants";
 import { Transaction } from "@mysten/sui/transactions";
 import type { Dataset } from "@/types";
-import { sha256Hex, canonicalSuiId } from "@/lib/utils";
+import { sha256Hex, canonicalSuiId, formatBytes } from "@/lib/utils";
 import TransactionStatus from "@/components/TransactionStatus";
 import useSecureDownload from "@/hooks/useSecureDownload";
+import { Filter, ShoppingBag, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,8 @@ export default function MarketplacePage() {
     downloading,
     error: downloadError,
     plaintext,
+    filename,
+    contentType,
     downloadAndDecrypt,
     reset: resetDownload,
   } = useSecureDownload();
@@ -50,6 +53,17 @@ export default function MarketplacePage() {
       return qok && sok;
     });
   }, [datasets, query, minQuality]);
+
+  const totalVolume = useMemo(() => {
+    if (!datasets?.length) return 0;
+    return datasets.reduce((acc, d) => acc + Number(d.price || 0), 0);
+  }, [datasets]);
+
+  const avgQuality = useMemo(() => {
+    if (!datasets?.length) return 0;
+    const scores = datasets.map((d) => Number(d.quality_score || 0));
+    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  }, [datasets]);
 
   async function handlePurchase(dataset: Dataset) {
     if (!isClient) throw new Error("Wallet not ready");
@@ -101,51 +115,109 @@ export default function MarketplacePage() {
     }
   }
 
+  async function handleSecureDownload(dataset: Dataset) {
+    const plain = await downloadAndDecrypt(dataset.id);
+    if (typeof window === "undefined") return;
+    try {
+      const blob = new Blob([plain], { type: contentType || "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const fallbackName = `${dataset.name || "zerovault-dataset"}-${dataset.id}`;
+      const nameWithExt = filename || fallbackName;
+      link.download = nameWithExt;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Failed to trigger dataset download from marketplace", e);
+    }
+  }
+
   return (
     <div className="space-y-5">
-      <header className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-white">ZeroVault marketplace</h1>
-          <p className="mt-1 text-sm text-gray-300">
-            Discover datasets with cryptographic provenance. Filter by quality, inspect Walrus blobs, and purchase with Sui.
-          </p>
+      <header className="space-y-4">
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-white">ZeroVault marketplace</h1>
+            <p className="mt-1 text-sm text-gray-300">
+              Browse encrypted datasets with on-chain provenance. Every purchase runs through Walrus, Seal, Nautilus, and Sui.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
+            <input
+              type="text"
+              placeholder="Search datasets..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-1.5 py-1 text-[11px] text-gray-200">
+              <span className="hidden sm:inline text-gray-400 mr-1">Quality:</span>
+              {[0, 70, 80, 90].map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => setMinQuality(q as 0 | 70 | 80 | 90)}
+                  className={`rounded-full px-2 py-0.5 transition ${
+                    minQuality === q ? "bg-blue-500 text-white" : "bg-transparent text-gray-200 hover:bg-white/10"
+                  }`}
+                >
+                  {q === 0 ? "All" : `${q}+`}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white hover:bg-white/10"
+            >
+              <Filter className="h-4 w-4" />
+              Refresh
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Search datasets..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <select
-            value={minQuality}
-            onChange={(e) => setMinQuality(Number(e.target.value) as 0 | 70 | 80 | 90)}
-            className="rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value={0}>All</option>
-            <option value={70}>70+</option>
-            <option value={80}>80+</option>
-            <option value={90}>90+</option>
-          </select>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white hover:bg-white/10"
-          >
-            Refresh
-          </button>
+        <div className="grid grid-cols-1 gap-3 text-xs text-gray-300 sm:grid-cols-3">
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3 flex items-center gap-2">
+            <ShoppingBag className="h-4 w-4 text-blue-300" />
+            <div>
+              <p className="font-semibold text-gray-100">Listings</p>
+              <p>{datasets?.length ?? 0} total datasets</p>
+            </div>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3 flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-emerald-300" />
+            <div>
+              <p className="font-semibold text-gray-100">Average quality</p>
+              <p>{avgQuality || 0} / 100 (Nautilus score)</p>
+            </div>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3 flex items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-xs font-bold text-white">
+              ZV
+            </span>
+            <div>
+              <p className="font-semibold text-gray-100">Real purchases</p>
+              <p>Pay with Sui PTBs; proofs verified on-chain.</p>
+            </div>
+          </div>
         </div>
+        {txStatus ? (
+          <div className="sticky top-4 z-10">
+            <TransactionStatus
+              status={txStatus === "pending" ? "pending" : txStatus === "success" ? "success" : "failed"}
+              digest={txDigest}
+              message={
+                txError ||
+                (txStatus === "pending"
+                  ? "Processing your purchase on Sui…"
+                  : "Purchase completed. This is a real Sui transaction.")
+              }
+            />
+          </div>
+        ) : null}
       </header>
-      {txStatus ? (
-        <div className="mt-2">
-          <TransactionStatus
-            status={txStatus === "pending" ? "pending" : txStatus === "success" ? "success" : "failed"}
-            digest={txDigest}
-            message={txError || "Processing purchase transaction"}
-          />
-        </div>
-      ) : null}
       {isLoading ? (
         <div className="mt-4">
           <LoadingSpinner message="Loading datasets..." />
@@ -178,7 +250,7 @@ export default function MarketplacePage() {
                 blobId={d.blob_id}
                 // Purchase triggers on-chain PTB; download is only enabled after a successful purchase.
                 onPurchase={() => handlePurchase(d)}
-                onDownload={hasPurchased ? () => downloadAndDecrypt(d.id) : undefined}
+                onDownload={hasPurchased ? () => handleSecureDownload(d) : undefined}
               />
             );
           })}

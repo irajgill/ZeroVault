@@ -51,10 +51,15 @@ export const SUPPORTED_FILE_TYPES: string[] = [
   "text/csv",
   "application/json",
   "text/plain",
+  // Archives / generic binary
   "application/zip",
   "application/x-zip-compressed",
   "application/x-tar",
   "application/octet-stream",
+  // Images
+  "image/png",
+  "image/jpeg",
+  "image/webp",
 ];
 
 

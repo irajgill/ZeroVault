@@ -13,6 +13,7 @@ import ErrorMessage from "@/components/ErrorMessage";
 import DatasetCard from "@/components/DatasetCard";
 import useSecureDownload from "@/hooks/useSecureDownload";
 import TransactionStatus from "@/components/TransactionStatus";
+import { Layers3 } from "lucide-react";
 
 export default function DashboardPage() {
   const account = useCurrentAccount();
@@ -31,13 +32,8 @@ export default function DashboardPage() {
 
   const { executeTransaction, waitForTransaction } = useSui();
 
-  const {
-    downloading,
-    error: downloadError,
-    plaintext,
-    downloadAndDecrypt,
-    reset: resetDownload,
-  } = useSecureDownload();
+  const { downloading, error: downloadError, plaintext, filename, contentType, downloadAndDecrypt, reset: resetDownload } =
+    useSecureDownload();
 
   useEffect(() => {
     setIsClient(true);
@@ -54,6 +50,26 @@ export default function DashboardPage() {
       mounted = false;
     };
   }, [addr]);
+
+  async function handleSecureDownload(dataset: any) {
+    const plain = await downloadAndDecrypt(dataset.id);
+    if (typeof window === "undefined") return;
+    try {
+      const blob = new Blob([plain], { type: contentType || "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const fallbackName = `${dataset.name || "zerovault-dataset"}-${dataset.id}`;
+      const nameWithExt = filename || fallbackName;
+      link.download = nameWithExt;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Failed to trigger dataset download", e);
+    }
+  }
 
   async function handleListOnChain(dataset: any) {
     if (!isClient) throw new Error("Wallet not ready");
@@ -119,7 +135,7 @@ export default function DashboardPage() {
           {addr ? (
             <>
               Connected as{" "}
-              <span className="font-medium text-white">{truncateAddress(addr)}</span>. Manage the datasets you\'ve
+              <span className="font-medium text-white">{truncateAddress(addr)}</span>. Manage the datasets you've
               uploaded and decrypt previews after secure purchase.
             </>
           ) : (
@@ -127,6 +143,16 @@ export default function DashboardPage() {
           )}
         </p>
       </header>
+
+      {listTx ? (
+        <div className="sticky top-4 z-10">
+          <TransactionStatus
+            status={listTx.status}
+            digest={listTx.digest}
+            message={listTx.message}
+          />
+        </div>
+      ) : null}
 
       {!addr ? null : state.loading ? (
         <div className="mt-4">
@@ -167,15 +193,16 @@ export default function DashboardPage() {
                     price={d.price}
                     qualityScore={Number(d.quality_score || 0)}
                     blobId={d.blob_id}
-                    onDownload={() => downloadAndDecrypt(d.id)}
+                    onDownload={() => handleSecureDownload(d)}
                   />
                   <button
                     type="button"
                     disabled={!addr}
                     onClick={() => handleListOnChain(d)}
-                    className="inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-gray-100 hover:bg-white/10 disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-gray-100 hover:bg-white/10 disabled:opacity-50"
                   >
-                    List on-chain (dev)
+                    <Layers3 className="h-3.5 w-3.5" />
+                    List on-chain
                   </button>
                 </div>
               ))}

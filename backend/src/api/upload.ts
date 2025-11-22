@@ -9,6 +9,8 @@ const router = express.Router();
 
 interface UploadBody {
 	file: string; // base64 string (optionally data URL)
+	originalFilename?: string;
+	contentType?: string;
 	metadata: {
 		name: string;
 		description: string;
@@ -83,6 +85,8 @@ router.post("/dataset", asyncHandler(async (req: Request, res: Response) => {
 		// Persist dataset in DB
 		const creatorHeader = (req.header("x-creator-address") || "").toLowerCase();
 		const creator = body.metadata.creator?.toLowerCase() || creatorHeader || "unknown";
+		const originalFilename = body.originalFilename || "";
+		const contentType = body.contentType || "";
 		const dataset = await createDataset({
 			name: body.metadata.name,
 			description: body.metadata.description,
@@ -91,6 +95,8 @@ router.post("/dataset", asyncHandler(async (req: Request, res: Response) => {
 			seal_policy_id: policyId,
 			price: String(body.metadata.price),
 			quality_score: typeof quality.quality_score === "number" ? quality.quality_score : null,
+			original_filename: originalFilename || null,
+			content_type: contentType || null,
 		});
 
 		return res.json({

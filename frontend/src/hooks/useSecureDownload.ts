@@ -9,12 +9,16 @@ interface SecureDownloadResult {
   downloading: boolean;
   error: string | null;
   plaintext: Uint8Array | null;
+  filename: string | null;
+  contentType: string | null;
   downloadAndDecrypt: (datasetId: string) => Promise<Uint8Array>;
   reset: () => void;
 }
 
 interface SecureDownloadResponse {
   blob_id: string;
+  original_filename?: string | null;
+  content_type?: string | null;
   nonce_b64: string;
   ciphertext_b64: string;
   wrapped_key: {
@@ -30,11 +34,15 @@ export function useSecureDownload(): SecureDownloadResult {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plaintext, setPlaintext] = useState<Uint8Array | null>(null);
+  const [filename, setFilename] = useState<string | null>(null);
+  const [contentType, setContentType] = useState<string | null>(null);
 
   const reset = useCallback(() => {
     setDownloading(false);
     setError(null);
     setPlaintext(null);
+    setFilename(null);
+    setContentType(null);
   }, []);
 
   const downloadAndDecrypt = useCallback(async (datasetId: string): Promise<Uint8Array> => {
@@ -42,6 +50,8 @@ export function useSecureDownload(): SecureDownloadResult {
     setDownloading(true);
     setError(null);
     setPlaintext(null);
+    setFilename(null);
+    setContentType(null);
     try {
       // Generate an ephemeral recipient keypair for this download (dev-only).
       // In a real app the user would have a long-lived X25519 key pair tied to their wallet.
@@ -57,6 +67,12 @@ export function useSecureDownload(): SecureDownloadResult {
 
       const nonce = Buffer.from(data.nonce_b64, "base64");
       const ciphertext = Buffer.from(data.ciphertext_b64, "base64");
+      if (data.original_filename) {
+        setFilename(data.original_filename);
+      }
+      if (data.content_type) {
+        setContentType(data.content_type);
+      }
 
       const ek = data.wrapped_key;
       const ephemeralPub = Buffer.from(ek.serverPublicKeyB64, "base64");
@@ -105,8 +121,8 @@ export function useSecureDownload(): SecureDownloadResult {
   }, []);
 
   return useMemo(
-    () => ({ downloading, error, plaintext, downloadAndDecrypt, reset }),
-    [downloading, error, plaintext, downloadAndDecrypt, reset]
+    () => ({ downloading, error, plaintext, filename, contentType, downloadAndDecrypt, reset }),
+    [downloading, error, plaintext, filename, contentType, downloadAndDecrypt, reset]
   );
 }
 

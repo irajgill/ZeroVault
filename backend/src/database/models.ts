@@ -25,6 +25,8 @@ export interface Dataset {
   // Use string for atomic price units to avoid JS number precision issues
   price: string;
   quality_score: number | null;
+  original_filename: string | null;
+  content_type: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -59,10 +61,22 @@ CREATE TABLE IF NOT EXISTS datasets (
   seal_policy_id TEXT NOT NULL,
   price BIGINT NOT NULL,
   quality_score INTEGER,
+  original_filename TEXT,
+  content_type TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_datasets_creator ON datasets(creator);
+`;
+
+export const SQL_ALTER_TABLE_DATASETS_ADD_ORIGINAL_FILENAME = `
+ALTER TABLE datasets
+  ADD COLUMN IF NOT EXISTS original_filename TEXT;
+`;
+
+export const SQL_ALTER_TABLE_DATASETS_ADD_CONTENT_TYPE = `
+ALTER TABLE datasets
+  ADD COLUMN IF NOT EXISTS content_type TEXT;
 `;
 
 export const SQL_CREATE_TABLE_PROOFS = `
@@ -101,6 +115,9 @@ export async function ensureSchema(): Promise<void> {
     await client.query(SQL_CREATE_TABLE_DATASETS);
     await client.query(SQL_CREATE_TABLE_PROOFS);
     await client.query(SQL_CREATE_TABLE_PURCHASES);
+    // Safe, idempotent column additions for new metadata
+    await client.query(SQL_ALTER_TABLE_DATASETS_ADD_ORIGINAL_FILENAME);
+    await client.query(SQL_ALTER_TABLE_DATASETS_ADD_CONTENT_TYPE);
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK");
@@ -126,6 +143,8 @@ function mapDatasetRow(row: any): Dataset {
     seal_policy_id: row.seal_policy_id,
     price: String(row.price),
     quality_score: row.quality_score !== null ? Number(row.quality_score) : null,
+    original_filename: row.original_filename ?? null,
+    content_type: row.content_type ?? null,
     created_at: new Date(row.created_at),
     updated_at: new Date(row.updated_at),
   };
@@ -158,8 +177,8 @@ export type CreateDatasetInput = Omit<Dataset, "id" | "created_at" | "updated_at
 
 export async function createDataset(input: CreateDatasetInput): Promise<Dataset> {
   const q = `
-    INSERT INTO datasets (name, description, creator, blob_id, seal_policy_id, price, quality_score)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO datasets (name, description, creator, blob_id, seal_policy_id, price, quality_score, original_filename, content_type)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *;
   `;
   const values = [
@@ -170,6 +189,8 @@ export async function createDataset(input: CreateDatasetInput): Promise<Dataset>
     input.seal_policy_id,
     input.price,
     input.quality_score,
+    input.original_filename,
+    input.content_type,
   ];
   const result: QueryResult = await pool.query(q, values);
   return mapDatasetRow(result.rows[0]);
