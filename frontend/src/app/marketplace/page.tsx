@@ -11,6 +11,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import type { Dataset } from "@/types";
 import { sha256Hex, canonicalSuiId } from "@/lib/utils";
 import TransactionStatus from "@/components/TransactionStatus";
+import useSecureDownload from "@/hooks/useSecureDownload";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,16 @@ export default function MarketplacePage() {
   const [query, setQuery] = useState("");
   const [minQuality, setMinQuality] = useState<0 | 70 | 80 | 90>(0);
   const { executeTransaction, waitForTransaction, account } = useSui();
+
+  const {
+    downloading,
+    error: downloadError,
+    plaintext,
+    downloadAndDecrypt,
+    reset: resetDownload,
+  } = useSecureDownload();
+
+  const [purchasedIds, setPurchasedIds] = useState<string[]>([]);
 
   const [txStatus, setTxStatus] = useState<"pending" | "success" | "failed" | null>(null);
   const [txDigest, setTxDigest] = useState<string | undefined>(undefined);
@@ -80,6 +91,9 @@ export default function MarketplacePage() {
       setTxDigest(digest);
       const ok = await waitForTransaction(digest);
       setTxStatus(ok ? "success" : "failed");
+      if (ok) {
+        setPurchasedIds((prev) => (prev.includes(dataset.id) ? prev : [...prev, dataset.id]));
+      }
       await refetch();
     } catch (e) {
       setTxStatus("failed");
@@ -150,25 +164,42 @@ export default function MarketplacePage() {
           </p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered?.map((d) => (
-            <DatasetCard
-              key={d.id}
-              id={d.sui_object_id || d.id}
-              name={d.name}
-              description={d.description}
-              creator={d.creator}
-              price={d.price}
-              qualityScore={Number(d.quality_score || 0)}
-              blobId={d.blob_id}
-              // Always allow purchase; Move will abort if dataset_id is not listed.
-              onPurchase={() => handlePurchase(d)}
-            />
-          ))}
+          {filtered?.map((d) => {
+            const hasPurchased = purchasedIds.includes(d.id);
+            return (
+              <DatasetCard
+                key={d.id}
+                id={d.sui_object_id || d.id}
+                name={d.name}
+                description={d.description}
+                creator={d.creator}
+                price={d.price}
+                qualityScore={Number(d.quality_score || 0)}
+                blobId={d.blob_id}
+                // Purchase triggers on-chain PTB; download is only enabled after a successful purchase.
+                onPurchase={() => handlePurchase(d)}
+                onDownload={hasPurchased ? () => downloadAndDecrypt(d.id) : undefined}
+              />
+            );
+          })}
         </div>
         {!isLoading && !error && filtered.length === 0 ? (
           <p className="mt-4 text-sm text-gray-400">No datasets match your filters yet.</p>
         ) : null}
       </section>
+      {downloadError ? (
+        <div className="mt-4">
+          <ErrorMessage error={downloadError} onRetry={resetDownload} />
+        </div>
+      ) : null}
+      {plaintext ? (
+        <div className="mt-4 rounded-md border border-white/10 bg-white/5 p-3">
+          <p className="mb-1 text-xs text-gray-300">Decrypted preview (first 256 bytes, UTF-8):</p>
+          <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all text-xs text-gray-100">
+            {new TextDecoder().decode(plaintext.subarray(0, 256))}
+          </pre>
+        </div>
+      ) : null}
     </div>
   );
 }

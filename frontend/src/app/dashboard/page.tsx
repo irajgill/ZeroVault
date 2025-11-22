@@ -12,6 +12,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ErrorMessage from "@/components/ErrorMessage";
 import DatasetCard from "@/components/DatasetCard";
 import useSecureDownload from "@/hooks/useSecureDownload";
+import TransactionStatus from "@/components/TransactionStatus";
 
 export default function DashboardPage() {
   const account = useCurrentAccount();
@@ -22,6 +23,11 @@ export default function DashboardPage() {
     error: null,
     items: [],
   });
+  const [listTx, setListTx] = useState<{
+    status: "pending" | "success" | "failed";
+    digest?: string;
+    message?: string;
+  } | null>(null);
 
   const { executeTransaction, waitForTransaction } = useSui();
 
@@ -79,9 +85,30 @@ export default function DashboardPage() {
         tx.pure.u8(quality),
       ],
     });
-
-    const digest = await executeTransaction(tx);
-    await waitForTransaction(digest);
+    setListTx({
+      status: "pending",
+      message: `Listing "${dataset.name}" on-chain…`,
+    });
+    try {
+      const digest = await executeTransaction(tx);
+      setListTx({
+        status: "pending",
+        digest,
+        message: `Listing "${dataset.name}" on-chain…`,
+      });
+      await waitForTransaction(digest);
+      setListTx({
+        status: "success",
+        digest,
+        message: `Dataset "${dataset.name}" successfully listed on-chain. This is a real Sui transaction.`,
+      });
+    } catch (e) {
+      setListTx({
+        status: "failed",
+        message: (e as Error).message ?? "Failed to list dataset on-chain",
+      });
+      throw e;
+    }
   }
 
   return (
@@ -156,6 +183,15 @@ export default function DashboardPage() {
           )}
         </section>
       )}
+      {listTx ? (
+        <div className="mt-4">
+          <TransactionStatus
+            status={listTx.status}
+            digest={listTx.digest}
+            message={listTx.message}
+          />
+        </div>
+      ) : null}
       {downloadError ? (
         <div className="mt-4">
           <ErrorMessage error={downloadError} onRetry={resetDownload} />
