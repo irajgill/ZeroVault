@@ -28,7 +28,7 @@ export async function uploadToWalrus(file: File): Promise<UploadResult> {
       file: base64,
       metadata: {
         name: file.name || "dataset",
-        description: `Uploaded via zkDataVault (${new Date().toISOString()})`,
+        description: `Uploaded via ZeroVault (${new Date().toISOString()})`,
         price: "0", // default 0 for client-side helper; real price set in listing flow
       },
     };

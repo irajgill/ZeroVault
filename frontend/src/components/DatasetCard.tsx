@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { PackageOpen, ExternalLink, ShoppingCart, Download, CheckCircle2, AlertTriangle } from "lucide-react";
 import QualityBadge from "./QualityBadge";
 import { formatMist, truncateAddress } from "@/lib/utils";
-import { checkBlobExists, getBlobUrl } from "@/lib/walrus-client";
+import { checkBlobExists, getBlobUrl, downloadFromWalrus } from "@/lib/walrus-client";
 
 export interface DatasetCardProps {
   id: string;
@@ -70,6 +70,24 @@ export default function DatasetCard({
     }
   };
 
+  const handleRawBlobClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (!blobId) return;
+    try {
+      const blob = await downloadFromWalrus(blobId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${name || "zerovault-dataset"}-${blobId}.bin`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download raw Walrus blob", err);
+    }
+  };
+
   const canDownload = useMemo(() => Boolean(onDownload), [onDownload]);
 
   return (
@@ -85,15 +103,19 @@ export default function DatasetCard({
             <div className="mt-2 flex flex-col gap-1 text-xs text-gray-400">
               <div className="flex items-center gap-3">
                 <span>Creator: {truncateAddress(creator)}</span>
-                <a
-                  href={getBlobUrl(blobId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 hover:text-gray-200"
-                  title="Open Walrus blob on aggregator"
-                >
-                  Blob <ExternalLink className="h-3.5 w-3.5" />
-                </a>
+                {blobId ? (
+                  <a
+                    href={getBlobUrl(blobId)}
+                    onClick={handleRawBlobClick}
+                    className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-100"
+                    title={getBlobUrl(blobId)}
+                  >
+                    <span className="font-medium">Download Walrus blob</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                ) : (
+                  <span className="text-xs text-gray-500">No Walrus blob yet</span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {walrusStatus === "available" ? (

@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@mysten/dapp-kit/dist/index.css";
 import ConnectWallet from "@/components/ConnectWallet";
 import { ZK_FAKE_VALID } from "@/constants";
+import { usePathname } from "next/navigation";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = useMemo(() => new QueryClient(), []);
@@ -16,25 +17,56 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     | "testnet"
     | "mainnet";
   const url = getFullnodeUrl(network);
+  const pathname = usePathname();
+
+  const isActive = (href: string) => (pathname === href ? "text-white" : "text-gray-300");
 
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={{ [network]: { url } }} defaultNetwork={network}>
         <WalletProvider autoConnect>
           <div className="min-h-screen flex flex-col">
-            <header className="border-b border-white/10">
+            <header className="border-b border-white/10 bg-gradient-to-b from-black/40 to-transparent backdrop-blur">
               <div className="mx-auto max-w-6xl w-full px-4 py-4 flex items-center justify-between">
                 <a
                   href="/"
-                  className="font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
+                  className="flex items-center gap-2 group"
                 >
-                  zkDataVault
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-xs font-bold text-white shadow-lg shadow-blue-500/30">
+                    ZV
+                  </span>
+                  <span className="flex flex-col leading-tight">
+                    <span className="font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                      ZeroVault
+                    </span>
+                    <span className="text-[11px] text-gray-400 group-hover:text-gray-300">
+                      ZK data vault on Sui
+                    </span>
+                  </span>
                 </a>
                 <div className="flex items-center gap-4">
-                  <nav className="hidden sm:flex items-center gap-4 text-sm text-gray-300">
-                    <a href="/upload">Upload</a>
-                    <a href="/marketplace">Marketplace</a>
-                    <a href="/dashboard">Dashboard</a>
+                  <nav className="hidden sm:flex items-center gap-4 text-sm">
+                    <a
+                      href="/upload"
+                      className={`${isActive("/upload")} hover:text-white transition`}
+                    >
+                      Upload
+                    </a>
+                    <a
+                      href="/marketplace"
+                      className={`${isActive("/marketplace")} hover:text-white transition`}
+                    >
+                      Marketplace
+                    </a>
+                    <a
+                      href="/dashboard"
+                      className={`${isActive("/dashboard")} hover:text-white transition`}
+                    >
+                      Dashboard
+                    </a>
+                    <span className="ml-2 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] uppercase tracking-wide text-gray-300">
+                      {network}
+                    </span>
                   </nav>
                   <ConnectWallet />
                 </div>
@@ -57,7 +89,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             </main>
             <footer className="border-t border-white/10">
               <div className="mx-auto max-w-6xl w-full px-4 py-6 text-xs text-gray-400">
-                Built for Walrus Haulout Hackathon
+                <span className="font-medium text-gray-300">ZeroVault</span>{" "}
+                · Privacy-first data vault on Sui · Built for Walrus Haulout Hackathon
               </div>
             </footer>
           </div>

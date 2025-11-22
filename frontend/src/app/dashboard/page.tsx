@@ -85,42 +85,76 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-      <p className="mt-1 text-gray-300">
-        {addr ? <>Connected as <span className="font-medium text-white">{truncateAddress(addr)}</span></> : "Connect your wallet to view your datasets"}
-      </p>
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-bold text-white">Your ZeroVault</h1>
+        <p className="mt-1 text-gray-300">
+          {addr ? (
+            <>
+              Connected as{" "}
+              <span className="font-medium text-white">{truncateAddress(addr)}</span>. Manage the datasets you\'ve
+              uploaded and decrypt previews after secure purchase.
+            </>
+          ) : (
+            "Connect your wallet to view and manage your datasets."
+          )}
+        </p>
+      </header>
 
       {!addr ? null : state.loading ? (
-        <div className="mt-6"><LoadingSpinner message="Loading your datasets..." /></div>
-      ) : state.error ? (
-        <div className="mt-6"><ErrorMessage error={state.error} /></div>
-      ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {state.items.map((d: any) => (
-            <div key={d.id} className="space-y-2">
-              <DatasetCard
-                id={d.id}
-                name={d.name}
-                description={d.description}
-                creator={d.creator}
-                price={d.price}
-                qualityScore={Number(d.quality_score || 0)}
-                blobId={d.blob_id}
-                onDownload={() => downloadAndDecrypt(d.id)}
-              />
-              <button
-                type="button"
-                disabled={!addr}
-                onClick={() => handleListOnChain(d)}
-                className="inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-100 hover:bg-white/10 disabled:opacity-50"
-              >
-                List on-chain (dev)
-              </button>
-            </div>
-          ))}
-          {state.items.length === 0 ? <p className="text-sm text-gray-400">No datasets yet.</p> : null}
+        <div className="mt-4">
+          <LoadingSpinner message="Loading your datasets..." />
         </div>
+      ) : state.error ? (
+        <div className="mt-4">
+          <ErrorMessage error={state.error} />
+        </div>
+      ) : (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-200 uppercase tracking-wide">Your datasets</h2>
+            <a
+              href="/upload"
+              className="text-xs rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-gray-100 hover:bg-white/10"
+            >
+              Upload new
+            </a>
+          </div>
+          {state.items.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-white/15 bg-white/5 p-4 text-sm text-gray-300">
+              You haven\'t uploaded any datasets yet.{" "}
+              <a href="/upload" className="font-medium text-blue-400 hover:text-blue-300">
+                Upload your first dataset
+              </a>{" "}
+              to mint a new ZeroVault entry backed by ZK proofs.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {state.items.map((d: any) => (
+                <div key={d.id} className="space-y-2">
+                  <DatasetCard
+                    id={d.id}
+                    name={d.name}
+                    description={d.description}
+                    creator={d.creator}
+                    price={d.price}
+                    qualityScore={Number(d.quality_score || 0)}
+                    blobId={d.blob_id}
+                    onDownload={() => downloadAndDecrypt(d.id)}
+                  />
+                  <button
+                    type="button"
+                    disabled={!addr}
+                    onClick={() => handleListOnChain(d)}
+                    className="inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-gray-100 hover:bg-white/10 disabled:opacity-50"
+                  >
+                    List on-chain (dev)
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
       {downloadError ? (
         <div className="mt-4">
@@ -129,7 +163,7 @@ export default function DashboardPage() {
       ) : null}
       {plaintext ? (
         <div className="mt-4 rounded-md border border-white/10 bg-white/5 p-3">
-          <p className="text-xs text-gray-300 mb-1">Decrypted preview (first 256 bytes, UTF-8):</p>
+          <p className="mb-1 text-xs text-gray-300">Decrypted preview (first 256 bytes, UTF-8):</p>
           <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all text-xs text-gray-100">
             {new TextDecoder().decode(plaintext.subarray(0, 256))}
           </pre>

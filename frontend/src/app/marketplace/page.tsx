@@ -88,9 +88,14 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Marketplace</h1>
+    <div className="space-y-5">
+      <header className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-white">ZeroVault marketplace</h1>
+          <p className="mt-1 text-sm text-gray-300">
+            Discover datasets with cryptographic provenance. Filter by quality, inspect Walrus blobs, and purchase with Sui.
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -117,9 +122,9 @@ export default function MarketplacePage() {
             Refresh
           </button>
         </div>
-      </div>
+      </header>
       {txStatus ? (
-        <div className="mt-4">
+        <div className="mt-2">
           <TransactionStatus
             status={txStatus === "pending" ? "pending" : txStatus === "success" ? "success" : "failed"}
             digest={txDigest}
@@ -127,27 +132,43 @@ export default function MarketplacePage() {
           />
         </div>
       ) : null}
-      {isLoading ? <div className="mt-6"><LoadingSpinner message="Loading datasets..." /></div> : null}
-      {error ? <div className="mt-6"><ErrorMessage error={error} onRetry={() => refetch()} /></div> : null}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered?.map((d) => (
-          <DatasetCard
-            key={d.id}
-            id={d.sui_object_id || d.id}
-            name={d.name}
-            description={d.description}
-            creator={d.creator}
-            price={d.price}
-            qualityScore={Number(d.quality_score || 0)}
-            blobId={d.blob_id}
-            // Always allow purchase; Move will abort if dataset_id is not listed.
-            onPurchase={() => handlePurchase(d)}
-          />
-        ))}
-      </div>
-      {!isLoading && !error && filtered.length === 0 ? (
-        <p className="mt-8 text-sm text-gray-400">No datasets found.</p>
+      {isLoading ? (
+        <div className="mt-4">
+          <LoadingSpinner message="Loading datasets..." />
+        </div>
       ) : null}
+      {error ? (
+        <div className="mt-4">
+          <ErrorMessage error={error} onRetry={() => refetch()} />
+        </div>
+      ) : null}
+      <section className="mt-2 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-200">Available datasets</h2>
+          <p className="text-xs text-gray-400">
+            Showing {filtered.length} of {datasets?.length ?? 0}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered?.map((d) => (
+            <DatasetCard
+              key={d.id}
+              id={d.sui_object_id || d.id}
+              name={d.name}
+              description={d.description}
+              creator={d.creator}
+              price={d.price}
+              qualityScore={Number(d.quality_score || 0)}
+              blobId={d.blob_id}
+              // Always allow purchase; Move will abort if dataset_id is not listed.
+              onPurchase={() => handlePurchase(d)}
+            />
+          ))}
+        </div>
+        {!isLoading && !error && filtered.length === 0 ? (
+          <p className="mt-4 text-sm text-gray-400">No datasets match your filters yet.</p>
+        ) : null}
+      </section>
     </div>
   );
 }

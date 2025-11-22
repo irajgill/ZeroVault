@@ -68,11 +68,10 @@ export async function uploadToWalrus(data: Buffer): Promise<string> {
 	// Prefer HTTP API for compatibility
 	const http = getAxios();
 	// Build candidate publisher endpoints:
-	// 1) explicit WALRUS_PUBLISHER_PATH if provided
-	// 2) /v1/store
-	// 3) /v1
-	// 4) /store
-	// 5) root
+	// 1) explicit WALRUS_PUBLISHER_UPLOAD_URL if provided
+	// 2) explicit WALRUS_PUBLISHER_PATH if provided
+	// 3) canonical Walrus publisher path: /v1/blobs    ← primary
+	// 4) legacy guesses (/v1/store, /v1, /store, root)
 	const candidates: string[] = [];
 	if (DEFAULT_PUBLISHER_UPLOAD_URL) {
 		candidates.push(trimTrailingSlash(DEFAULT_PUBLISHER_UPLOAD_URL));
@@ -80,7 +79,15 @@ export async function uploadToWalrus(data: Buffer): Promise<string> {
 	if (DEFAULT_PUBLISHER_PATH) {
 		candidates.push(`${publisher}${DEFAULT_PUBLISHER_PATH.startsWith("/") ? "" : "/"}${DEFAULT_PUBLISHER_PATH}`);
 	}
-	candidates.push(`${publisher}/v1/store`, `${publisher}/v1`, `${publisher}/store`, publisher);
+	// Walrus testnet publisher: PUT/POST /v1/blobs
+	candidates.push(
+		`${publisher}/v1/blobs`,
+		// Legacy/guess fallbacks kept for compatibility with older deployments
+		`${publisher}/v1/store`,
+		`${publisher}/v1`,
+		`${publisher}/store`,
+		publisher
+	);
 
 	let lastErr: unknown = null;
 	const triedUrls: string[] = [];

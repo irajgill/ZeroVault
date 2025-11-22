@@ -135,13 +135,13 @@ export default function UploadPage() {
       ) : null}
       {rejectionMsg ? <ErrorMessage error={rejectionMsg} /> : null}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm text-gray-300">Name</label>
           <input
             type="text"
             className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Dataset name"
+            placeholder="High-quality financial time-series, medical images, ..."
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -158,39 +158,35 @@ export default function UploadPage() {
             onChange={(e) => setPrice(e.target.value)}
           />
         </div>
-        <div>
-          <label className="block text-sm text-gray-300">Creator key (dev)</label>
-          <input
-            type="password"
-            className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Dev only"
-            value={creatorKey}
-            onChange={(e) => setCreatorKey(e.target.value)}
-          />
-        </div>
       </div>
 
       <div className="mt-4">
         <label className="block text-sm text-gray-300">Description</label>
         <textarea
           className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Describe your dataset..."
+          placeholder="Describe your dataset, its source, licensing, and ideal use-cases..."
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 
-      <div className="mt-6">
-        <label className="block text-sm text-gray-300">Creator key (dev)</label>
-        <input
-          type="password"
-          className="mt-1 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter a private key (dev only)"
-          value={creatorKey}
-          onChange={(e) => setCreatorKey(e.target.value)}
-        />
-        <p className="mt-1 text-xs text-gray-400">For hackathon demo only. Do not use real keys.</p>
+      <div className="mt-6 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-yellow-200">Hackathon dev field</p>
+        <p className="mt-1 text-xs text-yellow-100/90">
+          The creator key is only used as a field element input to the ZK circuit for this demo. Do not paste real
+          private keys here.
+        </p>
+        <div className="mt-3">
+          <label className="block text-sm text-gray-200">Creator key (dev only)</label>
+          <input
+            type="password"
+            className="mt-1 w-full rounded-md border border-yellow-500/40 bg-black/40 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            placeholder="Leave blank to use demo default"
+            value={creatorKey}
+            onChange={(e) => setCreatorKey(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="mt-6 flex items-center gap-3">
