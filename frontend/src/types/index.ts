@@ -76,6 +76,16 @@ export interface Purchase {
   dataset?: Dataset; // Joined data
 }
 
+export interface EmailAttestation {
+  id: string;
+  address: string;
+  email_hash: string;
+  domain: string;
+  circuit_type: string;
+  transaction_digest: string;
+  created_at: string;
+}
+
 export interface User {
   address: string;
   balance?: string;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from "react";
-import { PackageOpen, ExternalLink, ShoppingCart, Download, CheckCircle2, AlertTriangle } from "lucide-react";
+import { PackageOpen, ExternalLink, ShoppingCart, Download, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 import QualityBadge from "./QualityBadge";
 import { formatMist, truncateAddress } from "@/lib/utils";
 import { checkBlobExists, getBlobUrl, downloadFromWalrus } from "@/lib/walrus-client";
@@ -14,6 +14,7 @@ export interface DatasetCardProps {
   price: string;
   qualityScore: number;
   blobId: string;
+  verifiedDomain?: string;
   onPurchase?: () => Promise<void> | void;
   onDownload?: () => Promise<void> | void;
 }
@@ -26,6 +27,7 @@ export default function DatasetCard({
   price,
   qualityScore,
   blobId,
+  verifiedDomain,
   onPurchase,
   onDownload,
 }: DatasetCardProps) {
@@ -101,8 +103,14 @@ export default function DatasetCard({
             <h3 className="text-base font-semibold text-white">{name}</h3>
             <p className="mt-1 text-sm text-gray-300 line-clamp-3">{description}</p>
             <div className="mt-2 flex flex-col gap-1 text-xs text-gray-400">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <span>Creator: {truncateAddress(creator)}</span>
+                {verifiedDomain ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-300 ring-1 ring-emerald-500/30">
+                    <ShieldCheck className="h-3 w-3" />
+                    Verified @{verifiedDomain}
+                  </span>
+                ) : null}
                 {blobId ? (
                   <a
                     href={getBlobUrl(blobId)}

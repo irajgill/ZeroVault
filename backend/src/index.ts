@@ -7,6 +7,7 @@ import proofRouter from "./api/proof";
 import nautilusRouter from "./api/nautilus";
 import { initializeDatabase } from "./database/models";
 import datasetsRouter from "./api/datasets";
+import zkemailRouter from "./api/zkemail";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/proof", proofRouter);
 app.use("/api/nautilus", nautilusRouter);
 app.use("/api/datasets", datasetsRouter);
+app.use("/api/zkemail", zkemailRouter);
 
 // Upload and Purchase routers: load if present, else stub
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

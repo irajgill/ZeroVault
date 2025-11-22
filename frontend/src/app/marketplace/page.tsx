@@ -12,6 +12,7 @@ import type { Dataset } from "@/types";
 import { sha256Hex, canonicalSuiId, formatBytes } from "@/lib/utils";
 import TransactionStatus from "@/components/TransactionStatus";
 import useSecureDownload from "@/hooks/useSecureDownload";
+import useZkEmail from "@/hooks/useZkEmail";
 import { Filter, ShoppingBag, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,9 @@ export default function MarketplacePage() {
     downloadAndDecrypt,
     reset: resetDownload,
   } = useSecureDownload();
+
+  const currentAddress = account?.address || "";
+  const { attestations } = useZkEmail(currentAddress || undefined);
 
   const [purchasedIds, setPurchasedIds] = useState<string[]>([]);
 
@@ -238,6 +242,10 @@ export default function MarketplacePage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered?.map((d) => {
             const hasPurchased = purchasedIds.includes(d.id);
+            const creatorVerifiedDomain =
+              attestations.length > 0 && d.creator && currentAddress && d.creator.toLowerCase() === currentAddress.toLowerCase()
+                ? attestations[0].domain
+                : undefined;
             return (
               <DatasetCard
                 key={d.id}
@@ -248,6 +256,7 @@ export default function MarketplacePage() {
                 price={d.price}
                 qualityScore={Number(d.quality_score || 0)}
                 blobId={d.blob_id}
+                verifiedDomain={creatorVerifiedDomain}
                 // Purchase triggers on-chain PTB; download is only enabled after a successful purchase.
                 onPurchase={() => handlePurchase(d)}
                 onDownload={hasPurchased ? () => handleSecureDownload(d) : undefined}

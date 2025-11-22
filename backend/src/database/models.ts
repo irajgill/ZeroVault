@@ -48,6 +48,16 @@ export interface Purchase {
   purchased_at: Date;
 }
 
+export interface EmailAttestation {
+  id: string;
+  address: string;
+  email_hash: string;
+  domain: string;
+  circuit_type: string;
+  transaction_digest: string;
+  created_at: Date;
+}
+
 // SQL schema (PostgreSQL)
 export const SQL_ENABLE_PGCRYPTO = `CREATE EXTENSION IF NOT EXISTS "pgcrypto";`;
 
@@ -104,6 +114,20 @@ CREATE INDEX IF NOT EXISTS idx_purchases_dataset ON purchases(dataset_id);
 CREATE INDEX IF NOT EXISTS idx_purchases_buyer ON purchases(buyer_address);
 `;
 
+export const SQL_CREATE_TABLE_EMAIL_ATTESTATIONS = `
+CREATE TABLE IF NOT EXISTS email_attestations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  address TEXT NOT NULL,
+  email_hash TEXT NOT NULL,
+  domain TEXT NOT NULL,
+  circuit_type TEXT NOT NULL,
+  transaction_digest TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_email_attestations_address ON email_attestations(address);
+CREATE INDEX IF NOT EXISTS idx_email_attestations_domain ON email_attestations(domain);
+`;
+
 /**
  * Creates required tables if they do not already exist.
  */
@@ -115,6 +139,7 @@ export async function ensureSchema(): Promise<void> {
     await client.query(SQL_CREATE_TABLE_DATASETS);
     await client.query(SQL_CREATE_TABLE_PROOFS);
     await client.query(SQL_CREATE_TABLE_PURCHASES);
+    await client.query(SQL_CREATE_TABLE_EMAIL_ATTESTATIONS);
     // Safe, idempotent column additions for new metadata
     await client.query(SQL_ALTER_TABLE_DATASETS_ADD_ORIGINAL_FILENAME);
     await client.query(SQL_ALTER_TABLE_DATASETS_ADD_CONTENT_TYPE);
@@ -168,6 +193,18 @@ function mapPurchaseRow(row: any): Purchase {
     buyer_address: row.buyer_address,
     transaction_digest: row.transaction_digest,
     purchased_at: new Date(row.purchased_at),
+  };
+}
+
+function mapEmailAttestationRow(row: any): EmailAttestation {
+  return {
+    id: row.id,
+    address: row.address,
+    email_hash: row.email_hash,
+    domain: row.domain,
+    circuit_type: row.circuit_type,
+    transaction_digest: row.transaction_digest,
+    created_at: new Date(row.created_at),
   };
 }
 
@@ -242,6 +279,33 @@ export async function createPurchase(input: CreatePurchaseInput): Promise<Purcha
   ];
   const result = await pool.query(q, values);
   return mapPurchaseRow(result.rows[0]);
+}
+
+export type CreateEmailAttestationInput = Omit<EmailAttestation, "id" | "created_at">;
+
+export async function createEmailAttestation(input: CreateEmailAttestationInput): Promise<EmailAttestation> {
+  const q = `
+    INSERT INTO email_attestations (address, email_hash, domain, circuit_type, transaction_digest)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *;
+  `;
+  const values = [
+    input.address.toLowerCase(),
+    input.email_hash,
+    input.domain.toLowerCase(),
+    input.circuit_type,
+    input.transaction_digest,
+  ];
+  const result = await pool.query(q, values);
+  return mapEmailAttestationRow(result.rows[0]);
+}
+
+export async function getEmailAttestationsForAddress(address: string): Promise<EmailAttestation[]> {
+  const result = await pool.query(
+    `SELECT * FROM email_attestations WHERE lower(address) = $1 ORDER BY created_at DESC;`,
+    [address.toLowerCase()]
+  );
+  return result.rows.map(mapEmailAttestationRow);
 }
 
 
