@@ -1,0 +1,48 @@
+{
+  "name": "zerovault-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend for ZeroVault - Next.js + Sui dApp Kit",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@mysten/sui": "^1.0.0",
+    "@mysten/dapp-kit": "^0.12.0",
+    "@mysten/wallet-standard": "^0.12.0",
+    "@tanstack/react-query": "^5.0.0",
+    "zustand": "^4.4.7",
+    "lucide-react": "^0.300.0",
+    "react-dropzone": "^14.2.3",
+    "@headlessui/react": "^1.7.17",
+    "axios": "^1.6.5",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.2.0",
+    "date-fns": "^3.0.0",
+    "snarkjs": "^0.7.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "tailwindcss": "^3.4.0",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.0.0",
+    "@types/react": "^18.2.33",
+    "@types/react-dom": "^18.2.14",
+    "@types/node": "^20.11.5",
+    "postcss": "^8.4.31",
+    "autoprefixer": "^10.4.15"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
+
+

@@ -123,7 +123,12 @@ export default function MarketplacePage() {
     const plain = await downloadAndDecrypt(dataset.id);
     if (typeof window === "undefined") return;
     try {
-      const blob = new Blob([plain], { type: contentType || "application/octet-stream" });
+      const normalized = plain as Uint8Array<ArrayBuffer>;
+      const buffer = normalized.buffer.slice(
+        normalized.byteOffset,
+        normalized.byteOffset + normalized.byteLength
+      );
+      const blob = new Blob([buffer], { type: contentType || "application/octet-stream" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
