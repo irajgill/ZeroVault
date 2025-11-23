@@ -1,4 +1,4 @@
-## ZeroVault – zk Data Vault & Marketplace on Sui
+## ZeroVault – zk Data Vault & Marketplace on Sui 
 
 ZeroVault is a privacy‑first data vault and marketplace built on **Sui**.  
 It combines **Walrus** blob storage, **Seal encryption & key wrapping**, **Circom/Groth16 ZK proofs**, and a **Nautilus TEE** quality oracle to let creators sell encrypted datasets while buyers get verifiable quality guarantees – all without ever exposing raw data on‑chain.
