@@ -554,6 +554,9 @@ video {
 .mr-1 {
   margin-right: 0.25rem;
 }
+.ml-1 {
+  margin-left: 0.25rem;
+}
 .line-clamp-3 {
   overflow: hidden;
   display: -webkit-box;
@@ -608,6 +611,9 @@ video {
 .h-7 {
   height: 1.75rem;
 }
+.h-9 {
+  height: 2.25rem;
+}
 .max-h-40 {
   max-height: 10rem;
 }
@@ -644,11 +650,17 @@ video {
 .w-7 {
   width: 1.75rem;
 }
+.w-9 {
+  width: 2.25rem;
+}
 .max-w-3xl {
   max-width: 48rem;
 }
 .max-w-6xl {
   max-width: 72rem;
+}
+.max-w-xl {
+  max-width: 36rem;
 }
 .flex-1 {
   flex: 1 1 0%;
@@ -710,6 +722,9 @@ video {
 .gap-8 {
   gap: 2rem;
 }
+.gap-10 {
+  gap: 2.5rem;
+}
 .space-y-12 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(3rem * calc(1 - var(--tw-space-y-reverse)));
@@ -744,6 +759,11 @@ video {
   --tw-space-y-reverse: 0;
   margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+}
+.space-y-16 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(4rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(4rem * var(--tw-space-y-reverse));
 }
 .overflow-auto {
   overflow: auto;
@@ -930,6 +950,10 @@ video {
   -webkit-background-clip: text;
           background-clip: text;
 }
+.object-contain {
+  -o-object-fit: contain;
+     object-fit: contain;
+}
 .p-1 {
   padding: 0.25rem;
 }
@@ -1038,6 +1062,9 @@ video {
   font-size: 0.75rem;
   line-height: 1rem;
 }
+.text-\[10px\] {
+  font-size: 10px;
+}
 .font-bold {
   font-weight: 700;
 }
@@ -1144,6 +1171,10 @@ video {
   --tw-text-opacity: 1;
   color: rgb(250 204 21 / var(--tw-text-opacity, 1));
 }
+.text-blue-100 {
+  --tw-text-opacity: 1;
+  color: rgb(219 234 254 / var(--tw-text-opacity, 1));
+}
 .underline {
   text-decoration-line: underline;
 }
@@ -1211,6 +1242,13 @@ video {
 }
 .ring-yellow-500\/30 {
   --tw-ring-color: rgb(234 179 8 / 0.3);
+}
+.ring-blue-500\/40 {
+  --tw-ring-color: rgb(59 130 246 / 0.4);
+}
+.drop-shadow-\[0_0_10px_rgba\(59\2c 130\2c 246\2c 0\.5\)\] {
+  --tw-drop-shadow: drop-shadow(0 0 10px rgba(59,130,246,0.5));
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 .filter {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
@@ -1296,6 +1334,10 @@ a:hover {
 .hover\:bg-white\/20:hover {
   background-color: rgb(255 255 255 / 0.2);
 }
+.hover\:bg-emerald-500:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
+}
 .hover\:text-blue-100:hover {
   --tw-text-opacity: 1;
   color: rgb(219 234 254 / var(--tw-text-opacity, 1));
@@ -1376,6 +1418,18 @@ a:hover {
 
   .sm\:grid-cols-\[2fr_2fr_auto\] {
     grid-template-columns: 2fr 2fr auto;
+  }
+
+  .sm\:grid-cols-\[2fr_auto_auto\] {
+    grid-template-columns: 2fr auto auto;
+  }
+
+  .sm\:grid-cols-\[1\.1fr_2fr_auto\] {
+    grid-template-columns: 1.1fr 2fr auto;
+  }
+
+  .sm\:grid-cols-\[2fr_auto\] {
+    grid-template-columns: 2fr auto;
   }
 
   .sm\:flex-row {

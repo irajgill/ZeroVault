@@ -152,8 +152,10 @@ export default function UploadPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-white">Upload dataset</h1>
-      <p className="mt-1 text-gray-300">Encrypt, store in Walrus, generate ZK proof-of-origin, and verify on-chain.</p>
+      <h1 className="text-2xl font-bold text-white">Create a ZeroVault dataset</h1>
+      <p className="mt-1 text-gray-300">
+        Encrypt any file with Seal, store it on Walrus as an encrypted blob, and mint a ZK-backed proof of origin on Sui.
+      </p>
 
       <div
         {...getRootProps()}

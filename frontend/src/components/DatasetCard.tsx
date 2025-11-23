@@ -111,16 +111,22 @@ export default function DatasetCard({
                     Verified @{verifiedDomain}
                   </span>
                 ) : null}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
                 {blobId ? (
-                  <a
-                    href={getBlobUrl(blobId)}
-                    onClick={handleRawBlobClick}
-                    className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-100"
-                    title={getBlobUrl(blobId)}
-                  >
-                    <span className="font-medium">Download Walrus blob</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
+                  <>
+                    <span className="text-gray-400">Walrus blob:</span>
+                    <a
+                      href={`https://walruscan.com/testnet/blob/${encodeURIComponent(blobId)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono text-[11px] text-blue-300 hover:text-blue-100 underline decoration-dotted"
+                      title={blobId}
+                    >
+                      {blobId.length > 16 ? `${blobId.slice(0, 8)}…${blobId.slice(-6)}` : blobId}
+                      <ExternalLink className="ml-1 inline-block h-3 w-3" />
+                    </a>
+                  </>
                 ) : (
                   <span className="text-xs text-gray-500">No Walrus blob yet</span>
                 )}
@@ -162,7 +168,7 @@ export default function DatasetCard({
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 hover:bg-blue-500"
           >
             <ShoppingCart className="h-4 w-4" />
-            {buying ? "Processing..." : "Purchase"}
+            {buying ? "Confirming…" : "Purchase access"}
           </button>
           <button
             type="button"
@@ -171,7 +177,7 @@ export default function DatasetCard({
             className="inline-flex items-center gap-2 rounded-md bg-purple-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 hover:bg-purple-500"
           >
             <Download className="h-4 w-4" />
-            {downloading ? "Decrypting..." : "Download (dev)"}
+            {downloading ? "Decrypting…" : "Secure download"}
           </button>
         </div>
       </div>
