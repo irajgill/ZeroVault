@@ -6,8 +6,14 @@ use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper_util::rt::TokioIo;
+use dotenvy::dotenv;
 use serde::{Deserialize, Serialize};
-use std::{net::SocketAddr, path::Path, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    env,
+    net::SocketAddr,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use tracing::{error, info, instrument};
 
 mod walrus_client;
@@ -32,8 +38,12 @@ struct VerificationResponse {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenv().ok();
     init_tracing();
-    let addr: SocketAddr = ([0, 0, 0, 0], 3000).into();
+    let listen_addr = env::var("NAUTILUS_LISTEN_ADDR").unwrap_or_else(|_| "0.0.0.0:3000".into());
+    let addr: SocketAddr = listen_addr
+        .parse()
+        .with_context(|| format!("Invalid NAUTILUS_LISTEN_ADDR '{}'", listen_addr))?;
     info!("Starting Nautilus TEE Service on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr)

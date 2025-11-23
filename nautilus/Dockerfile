@@ -1,5 +1,5 @@
 # ---------- Builder Stage ----------
-FROM rust:1.75-slim AS builder
+FROM rust:1.84-slim AS builder
 
 WORKDIR /build
 
@@ -18,16 +18,17 @@ COPY src ./src
 RUN touch src/main.rs && cargo build --release
 
 # ---------- Runtime Stage ----------
-FROM amazonlinux:2 AS runtime
+FROM debian:bookworm-slim AS runtime
 
 WORKDIR /app
 
-# Minimal runtime deps
-RUN yum update -y && yum install -y ca-certificates curl && \
-    yum clean all && rm -rf /var/cache/yum
+# Minimal runtime deps (Debian already ships OpenSSL 3)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl openssl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN useradd -u 1000 -r -s /sbin/nologin nautilus && \
+RUN useradd -u 1000 -r -s /usr/sbin/nologin nautilus && \
     mkdir -p /app && chown -R nautilus:nautilus /app
 
 # Copy compiled binary
@@ -35,9 +36,15 @@ COPY --from=builder /build/target/release/zkdatavault-nautilus /app/nautilus-ser
 RUN chown nautilus:nautilus /app/nautilus-service && chmod 0755 /app/nautilus-service
 
 USER nautilus
+ENV NAUTILUS_LISTEN_ADDR=0.0.0.0:3000
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD curl -f http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD /bin/sh -c '\
+    ADDR="${NAUTILUS_LISTEN_ADDR:-0.0.0.0:3000}"; \
+    HOST="${ADDR%:*}"; \
+    PORT="${ADDR##*:}"; \
+    [ "$HOST" = "0.0.0.0" ] && HOST=127.0.0.1; \
+    curl -f "http://$HOST:$PORT/health" || exit 1'
 
 CMD ["/app/nautilus-service"]
 
