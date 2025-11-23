@@ -14,57 +14,58 @@ const HomePage: React.FC = () => {
             <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">
               ZV
             </span>
-            ZeroVault · ZK data vault on Sui
+            ZeroVault · Encrypted data marketplace on Sui
           </p>
           <h1 className="mt-4 text-3xl sm:text-5xl font-extrabold bg-gradient-to-r from-blue-400 via-purple-500 to-fuchsia-500 bg-clip-text text-transparent">
-            Ship a provable data vault in minutes, not months
+            Sell datasets without giving them away
           </h1>
           <p className="mt-4 text-gray-300 text-sm sm:text-base max-w-xl">
-            ZeroVault wraps your datasets in end-to-end encryption, Walrus storage, zkSNARK proofs, Nautilus TEE checks,
-            and Sui smart contracts — so you can focus on the product, not the plumbing.
+            Upload any file, store it as an encrypted Walrus blob, prove authenticity with ZK, and sell access on Sui.
+            Buyers get quality and provenance; you keep your raw data private.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <a
               href="/upload"
               className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-500 shadow-lg shadow-blue-600/30"
             >
-              Upload your first dataset
+              Start uploading
             </a>
             <a
               href="/marketplace"
               className="rounded-md bg-white/10 px-5 py-2.5 text-sm font-medium text-gray-100 hover:bg-white/20"
             >
-              Explore marketplace
+              Browse marketplace
             </a>
             <span className="text-xs text-gray-400">
-              No raw data ever leaves your vault — only encrypted blobs and proofs on-chain.
+              No raw data on-chain — only encrypted blobs, proofs, and attestations.
             </span>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-4 text-xs text-gray-300 sm:grid-cols-3">
+          <div className="mt-6 grid grid-cols-3 gap-4 text-xs text-gray-300">
             <div>
-              <p className="font-semibold text-gray-100">Walrus Haulout ready</p>
-              <p className="mt-1 text-gray-400">Built specifically for Walrus, Seal, Nautilus and Sui.</p>
+              <p className="font-semibold text-gray-100">100% encrypted</p>
+              <p className="mt-1 text-gray-400">Seal-style envelopes for every dataset.</p>
             </div>
             <div>
-              <p className="font-semibold text-gray-100">End-to-end encrypted</p>
-              <p className="mt-1 text-gray-400">Seal XSalsa20-Poly1305 envelopes for every dataset.</p>
+              <p className="font-semibold text-gray-100">Real ZK on Sui</p>
+              <p className="mt-1 text-gray-400">Groth16 proofs verified in Move.</p>
             </div>
             <div>
-              <p className="font-semibold text-gray-100">On-chain provenance</p>
-              <p className="mt-1 text-gray-400">Groth16 proofs verified natively by Sui Move contracts.</p>
+              <p className="font-semibold text-gray-100">Quality scored</p>
+              <p className="mt-1 text-gray-400">Nautilus TEE checks every blob.</p>
             </div>
           </div>
         </div>
+
         <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-purple-500/10 p-4 sm:p-5 shadow-xl shadow-black/40 space-y-4">
-          <p className="text-xs font-medium text-gray-300 uppercase tracking-wide">ZeroVault pipeline</p>
+          <p className="text-xs font-medium text-gray-300 uppercase tracking-wide">How ZeroVault works</p>
           <ol className="space-y-3 text-sm text-gray-200">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 h-5 w-5 rounded-full bg-blue-600 text-[11px] font-semibold flex items-center justify-center">
                 1
               </span>
               <span>
-                <span className="font-semibold">Encrypt &amp; upload</span>{" "}
-                <span className="text-gray-300">— Your file is sealed with Seal and stored as a Walrus blob.</span>
+                <span className="font-semibold">Encrypt &amp; ship</span>{" "}
+                <span className="text-gray-300">— Your file is sealed and written to Walrus as a private blob.</span>
               </span>
             </li>
             <li className="flex items-start gap-2">
@@ -72,9 +73,9 @@ const HomePage: React.FC = () => {
                 2
               </span>
               <span>
-                <span className="font-semibold">Prove authenticity</span>{" "}
+                <span className="font-semibold">Prove &amp; verify</span>{" "}
                 <span className="text-gray-300">
-                  — Circom + Groth16 prove origin, timestamp, and integrity without revealing the data.
+                  — Circom/Groth16 proofs are verified on Sui; Nautilus scores dataset quality.
                 </span>
               </span>
             </li>
@@ -83,81 +84,65 @@ const HomePage: React.FC = () => {
                 3
               </span>
               <span>
-                <span className="font-semibold">Verify &amp; attest</span>{" "}
+                <span className="font-semibold">List &amp; sell</span>{" "}
                 <span className="text-gray-300">
-                  — Sui smart contracts and Nautilus TEE validate proofs and quality scores.
-                </span>
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 h-5 w-5 rounded-full bg-pink-600 text-[11px] font-semibold flex items-center justify-center">
-                4
-              </span>
-              <span>
-                <span className="font-semibold">List &amp; monetize</span>{" "}
-                <span className="text-gray-300">
-                  — Buyers purchase access while you retain cryptographic control over the data.
+                  — Buyers pay in Sui and unlock a secure download with the original filename and type.
                 </span>
               </span>
             </li>
           </ol>
-          <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] text-gray-300">
-            <div className="rounded-lg border border-white/10 bg-black/30 px-3 py-2">
-              <p className="font-semibold text-gray-100">For dataset creators</p>
-              <p className="mt-1 text-gray-400">Ship privacy-first data products with instant on-chain provenance.</p>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-black/30 px-3 py-2">
-              <p className="font-semibold text-gray-100">For buyers &amp; teams</p>
-              <p className="mt-1 text-gray-400">Inspect Walrus blobs, quality scores, and proofs before purchasing.</p>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Why ZeroVault */}
+      {/* Why teams use ZeroVault */}
       <section className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-            <h3 className="font-semibold text-white">🔐 Zero-Knowledge privacy</h3>
+            <h3 className="font-semibold text-white">Ship fast, stay private</h3>
             <p className="mt-2 text-sm text-gray-300">
-              Prove facts about your dataset (origin, timestamp, integrity) without ever revealing the underlying bytes.
+              A full pipeline (Walrus, Seal, ZK, Nautilus, Sui) already wired together so you don&apos;t build infra from
+              scratch.
             </p>
           </div>
           <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-            <h3 className="font-semibold text-white">✅ On-chain authenticity</h3>
+            <h3 className="font-semibold text-white">Trust for buyers</h3>
             <p className="mt-2 text-sm text-gray-300">
-              Sui Move contracts verify Groth16 proofs and anchor your dataset&apos;s provenance and creator identity on-chain.
+              On-chain proofs, quality scores, and zkEmail verified creators reduce the risk of junk or fake datasets.
             </p>
           </div>
           <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-            <h3 className="font-semibold text-white">🤖 TEE-backed quality</h3>
+            <h3 className="font-semibold text-white">Built for real infra</h3>
             <p className="mt-2 text-sm text-gray-300">
-              Nautilus TEEs run byte-level checks and return a quality score to protect buyers from junk or synthetic data.
+              Runs on Sui testnet, Walrus testnet, Postgres, Nautilus TEE, and AWS EC2 — not mocks.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Stack */}
+      {/* Stack strip */}
       <section className="mx-auto max-w-6xl">
         <div className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-300">Built with</p>
-          <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-gray-200 sm:grid-cols-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-300">Powered by</p>
+          <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-gray-200 sm:grid-cols-5">
             <div className="rounded-md bg-black/30 px-3 py-2 border border-white/5">
               <p className="font-medium">Sui</p>
               <p className="text-xs text-gray-400">Programmable data ownership &amp; PTBs</p>
             </div>
             <div className="rounded-md bg-black/30 px-3 py-2 border border-white/5">
               <p className="font-medium">Walrus</p>
-              <p className="text-xs text-gray-400">Durable testnet blob storage</p>
+              <p className="text-xs text-gray-400">Encrypted blob storage on testnet</p>
             </div>
             <div className="rounded-md bg-black/30 px-3 py-2 border border-white/5">
               <p className="font-medium">Seal</p>
-              <p className="text-xs text-gray-400">End-to-end encryption &amp; key wrapping</p>
+              <p className="text-xs text-gray-400">End‑to‑end encryption &amp; key wrapping</p>
             </div>
             <div className="rounded-md bg-black/30 px-3 py-2 border border-white/5">
               <p className="font-medium">Nautilus</p>
               <p className="text-xs text-gray-400">TEE attestation &amp; quality scoring</p>
+            </div>
+            <div className="rounded-md bg-black/30 px-3 py-2 border border-white/5">
+              <p className="font-medium">AWS</p>
+              <p className="text-xs text-gray-400">Single‑box EC2 deployment for the whole stack</p>
             </div>
           </div>
         </div>
@@ -167,5 +152,8 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+
+
+
 
 
