@@ -42,11 +42,15 @@ exports.downloadFromWalrus = downloadFromWalrus;
 const axios_1 = __importDefault(require("axios"));
 const crypto_1 = __importDefault(require("crypto"));
 const DEFAULT_AGGREGATOR = process.env.WALRUS_AGGREGATOR || "https://aggregator.walrus-testnet.walrus.space";
-const DEFAULT_PUBLISHER = process.env.WALRUS_PUBLISHER ||
-    process.env.WALRUS_AGGREGATOR ||
-    "https://aggregator.walrus-testnet.walrus.space";
+const FALLBACK_PUBLISHER_BASE = "https://publisher.walrus-testnet.walrus.space";
+const rawPublisher = (process.env.WALRUS_PUBLISHER || "").trim();
+const sanitizedPublisher = rawPublisher && rawPublisher.includes("aggregator.walrus-testnet.walrus.space")
+    ? rawPublisher.replace("aggregator.walrus-testnet.walrus.space", "publisher.walrus-testnet.walrus.space")
+    : rawPublisher;
+const DEFAULT_PUBLISHER = sanitizedPublisher || FALLBACK_PUBLISHER_BASE;
 const DEFAULT_PUBLISHER_PATH = process.env.WALRUS_PUBLISHER_PATH || ""; // e.g. "/v1/store" if your publisher requires it
-const DEFAULT_PUBLISHER_UPLOAD_URL = process.env.WALRUS_PUBLISHER_UPLOAD_URL || "";
+const DEFAULT_PUBLISHER_UPLOAD_URL = (process.env.WALRUS_PUBLISHER_UPLOAD_URL && process.env.WALRUS_PUBLISHER_UPLOAD_URL.trim()) ||
+    `${trimTrailingSlash(DEFAULT_PUBLISHER)}/v1/blobs`;
 function trimTrailingSlash(url) {
     return url.replace(/\/+$/, "");
 }
