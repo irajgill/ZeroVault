@@ -124,7 +124,7 @@ export async function uploadToWalrus(data: Buffer): Promise<string> {
 					// @ts-expect-error Node18: FormData exists in undici; fallback via any
 					form.append("file", new Blob([data]), "blob.bin");
 					resp = await http.post(url, form as any, {
-						// @ts-expect-error allow
+						// @ts-ignore
 						headers: (form as any).getHeaders ? (form as any).getHeaders() : {}
 					});
 				}

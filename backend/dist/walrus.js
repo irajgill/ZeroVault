@@ -45,6 +45,8 @@ const DEFAULT_AGGREGATOR = process.env.WALRUS_AGGREGATOR || "https://aggregator.
 const DEFAULT_PUBLISHER = process.env.WALRUS_PUBLISHER ||
     process.env.WALRUS_AGGREGATOR ||
     "https://aggregator.walrus-testnet.walrus.space";
+const DEFAULT_PUBLISHER_PATH = process.env.WALRUS_PUBLISHER_PATH || ""; // e.g. "/v1/store" if your publisher requires it
+const DEFAULT_PUBLISHER_UPLOAD_URL = process.env.WALRUS_PUBLISHER_UPLOAD_URL || "";
 function trimTrailingSlash(url) {
     return url.replace(/\/+$/, "");
 }
@@ -96,39 +98,80 @@ async function uploadToWalrus(data) {
     }
     // Prefer HTTP API for compatibility
     const http = getAxios();
-    // Common Walrus publisher endpoints seen in the wild are /v1/store or /v1.
-    // Try /v1/store first; fall back to /v1 if needed.
-    const candidates = [`${publisher}/v1/store`, `${publisher}/v1`];
+    // Build candidate publisher endpoints:
+    // 1) explicit WALRUS_PUBLISHER_UPLOAD_URL if provided
+    // 2) explicit WALRUS_PUBLISHER_PATH if provided
+    // 3) canonical Walrus publisher path: /v1/blobs    ← primary
+    // 4) legacy guesses (/v1/store, /v1, /store, root)
+    const candidates = [];
+    if (DEFAULT_PUBLISHER_UPLOAD_URL) {
+        candidates.push(trimTrailingSlash(DEFAULT_PUBLISHER_UPLOAD_URL));
+    }
+    if (DEFAULT_PUBLISHER_PATH) {
+        candidates.push(`${publisher}${DEFAULT_PUBLISHER_PATH.startsWith("/") ? "" : "/"}${DEFAULT_PUBLISHER_PATH}`);
+    }
+    // Walrus testnet publisher: PUT/POST /v1/blobs
+    candidates.push(`${publisher}/v1/blobs`, 
+    // Legacy/guess fallbacks kept for compatibility with older deployments
+    `${publisher}/v1/store`, `${publisher}/v1`, `${publisher}/store`, publisher);
     let lastErr = null;
+    const triedUrls = [];
     for (const url of candidates) {
-        try {
-            console.log(`[Walrus] Uploading to ${url} ...`);
-            const resp = await http.post(url, data, {
-                headers: { "Content-Type": "application/octet-stream" },
-                onUploadProgress: (e) => {
-                    if (e.total) {
-                        const pct = ((e.loaded / e.total) * 100).toFixed(1);
-                        console.log(`[Walrus] Upload progress: ${pct}% (${e.loaded}/${e.total})`);
+        // simple exponential backoff retry
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                console.log(`[Walrus] Uploading to ${url} (attempt ${attempt}) ...`);
+                triedUrls.push(url);
+                // Try multiple methods/shapes commonly seen in blob publishers
+                // Prefer PUT octet-stream first (Walrus publisher expects PUT /v1/blobs)
+                let resp = await http.put(url, data, {
+                    headers: { "Content-Type": "application/octet-stream" },
+                    onUploadProgress: (e) => {
+                        if (e.total) {
+                            const pct = ((e.loaded / e.total) * 100).toFixed(1);
+                            console.log(`[Walrus] Upload progress: ${pct}% (${e.loaded}/${e.total})`);
+                        }
+                        else {
+                            console.log(`[Walrus] Upload progress: ${e.loaded} bytes`);
+                        }
                     }
-                    else {
-                        console.log(`[Walrus] Upload progress: ${e.loaded} bytes`);
-                    }
+                });
+                // If 404/405 fall back to POST octet-stream
+                if ((resp.status === 404 || resp.status === 405) && attempt < 3) {
+                    console.log("[Walrus] PUT not accepted, retrying with POST octet-stream");
+                    resp = await http.post(url, data, {
+                        headers: { "Content-Type": "application/octet-stream" }
+                    });
                 }
-            });
-            // Accept multiple possible response shapes
-            const blobId = extractBlobId(resp.data);
-            if (!blobId) {
-                throw new Error("Upload response missing blob_id");
+                // If still not accepted, try multipart/form-data (field 'file')
+                if ((resp.status === 404 || resp.status === 415 || resp.status === 400) && attempt < 3) {
+                    console.log("[Walrus] Octet-stream not accepted, retrying with multipart/form-data");
+                    const form = new FormData();
+                    // @ts-expect-error Node18: FormData exists in undici; fallback via any
+                    form.append("file", new Blob([data]), "blob.bin");
+                    resp = await http.post(url, form, {
+                        // @ts-ignore
+                        headers: form.getHeaders ? form.getHeaders() : {}
+                    });
+                }
+                // Accept multiple possible response shapes
+                const blobId = extractBlobId(resp.data);
+                if (!blobId) {
+                    throw new Error("Upload response missing blob_id");
+                }
+                console.log(`[Walrus] Upload success: blob_id=${blobId}`);
+                return blobId;
             }
-            console.log(`[Walrus] Upload success: blob_id=${blobId}`);
-            return blobId;
-        }
-        catch (err) {
-            lastErr = err;
-            console.log(`[Walrus] Upload failed at ${url}: ${err.message}`);
+            catch (err) {
+                lastErr = err;
+                const msg = err.message || String(err);
+                console.log(`[Walrus] Upload failed at ${url} (attempt ${attempt}): ${msg}`);
+                // brief backoff
+                await new Promise((r) => setTimeout(r, 500 * attempt));
+            }
         }
     }
-    throw new Error(`Walrus upload failed: ${lastErr?.message || "unknown error"}`);
+    throw new Error(`Walrus upload failed after trying [${Array.from(new Set(triedUrls)).join(", ")}]: ${lastErr?.message || "unknown error"}`);
 }
 /**
  * Download raw bytes from Walrus by blob id.
@@ -143,7 +186,8 @@ async function downloadFromWalrus(blobId) {
         console.log(`[Walrus] WALRUS_ALLOW_MOCK=1 → mock download, size=${synthetic.length} bytes`);
         return synthetic;
     }
-    const url = `${aggregator}/v1/${encodeURIComponent(blobId)}`;
+    // Walrus aggregator exposes blobs under /v1/blobs/{blob_id}
+    const url = `${aggregator}/v1/blobs/${encodeURIComponent(blobId)}`;
     console.log(`[Walrus] Downloading from ${url} ...`);
     try {
         const http = getAxios();
@@ -164,6 +208,14 @@ async function downloadFromWalrus(blobId) {
         return buf;
     }
     catch (err) {
+        // Provide clearer diagnostics for aggregator 404s, which are common on testnet
+        // when blobs have not yet propagated to committees.
+        const anyErr = err;
+        const status = anyErr?.response?.status;
+        if (status === 404) {
+            console.log(`[Walrus] Download 404 from aggregator for blob ${blobId} – blob may not yet be available network-wide.`);
+            throw new Error(`Walrus aggregator returned 404 for blob ${blobId}. On testnet this often means the blob is not yet available; try again in a few seconds.`);
+        }
         console.log(`[Walrus] Download failed: ${err.message}`);
         throw new Error(`Failed to download Walrus blob ${blobId}: ${err.message}`);
     }
@@ -175,7 +227,46 @@ function extractBlobId(data) {
     if (data && typeof data === "object") {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const anyData = data;
-        return anyData.blob_id || anyData.blobId || anyData.id || null;
+        // Direct fields
+        if (anyData.blob_id || anyData.blobId || anyData.id) {
+            return anyData.blob_id || anyData.blobId || anyData.id;
+        }
+        // Publisher BlobStoreResult: alreadyCertified variant
+        // Shape: { alreadyCertified: { blob_id, end_epoch, ... } }
+        if (anyData.alreadyCertified && typeof anyData.alreadyCertified === "object") {
+            const ac = anyData.alreadyCertified;
+            if (ac.blob_id || ac.blobId)
+                return ac.blob_id || ac.blobId;
+        }
+        // Publisher BlobStoreResult: newlyCreated variant
+        // Common shapes:
+        // - { newlyCreated: { blob_object: { blobId, ... }, ... } }
+        // - { newlyCreated: { blobObject: { blobId, ... }, ... } }
+        if (anyData.newlyCreated && typeof anyData.newlyCreated === "object") {
+            const nc = anyData.newlyCreated;
+            const bo = (nc.blob_object || nc.blobObject);
+            if (bo && typeof bo === "object") {
+                if (bo.blobId)
+                    return bo.blobId;
+                // Some implementations may use snake_case
+                if (bo.blob_id)
+                    return bo.blob_id;
+            }
+        }
+        // Some servers may wrap result under data/result
+        if (anyData.result) {
+            return extractBlobId(anyData.result);
+        }
+        if (anyData.data) {
+            return extractBlobId(anyData.data);
+        }
+        // Fallback: try first string value in object that looks like a blob id (URL-safe base64)
+        for (const v of Object.values(anyData)) {
+            if (typeof v === "string" && /^[A-Za-z0-9_-]+$/.test(v) && v.length >= 20) {
+                return v;
+            }
+        }
+        return null;
     }
     return null;
 }

@@ -27,10 +27,20 @@ router.post("/dataset", asyncHandler(async (req, res) => {
     // Build a temporary policy for dev; real Seal will define policies off-chain
     const expiry = typeof body.expiryTimestamp === "number" ? body.expiryTimestamp : Math.floor(Date.now() / 1000) + 30 * 24 * 3600;
     const policyId = await (0, seal_1.getSealPolicyId)(body.allowedAddresses || [], expiry);
-    // Encrypt with placeholder AES-256-CBC
-    const { encryptedData, metadata } = await (0, seal_1.encryptWithSeal)(plaintext, policyId);
+    // Encrypt with Seal envelope (XSalsa20-Poly1305, nonce||ciphertext)
+    const { combined, metadata } = await (0, seal_1.encryptWithSeal)(plaintext, policyId);
     // Upload encrypted bytes to Walrus
-    const blob_id = await (0, walrus_1.uploadToWalrus)(encryptedData);
+    const blob_id = await (0, walrus_1.uploadToWalrus)(combined);
+    // Verify the blob is retrievable (lightweight HEAD-equivalent by GET length)
+    let stored_size = 0;
+    try {
+        const buf = await (0, walrus_1.downloadFromWalrus)(blob_id);
+        stored_size = buf.length;
+    }
+    catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn("[upload] Walrus post-upload check failed:", e.message);
+    }
     // Optional: Call Nautilus for quality verification
     let quality = {};
     try {
@@ -54,6 +64,8 @@ router.post("/dataset", asyncHandler(async (req, res) => {
     // Persist dataset in DB
     const creatorHeader = (req.header("x-creator-address") || "").toLowerCase();
     const creator = body.metadata.creator?.toLowerCase() || creatorHeader || "unknown";
+    const originalFilename = body.originalFilename || "";
+    const contentType = body.contentType || "";
     const dataset = await (0, models_1.createDataset)({
         name: body.metadata.name,
         description: body.metadata.description,
@@ -62,12 +74,15 @@ router.post("/dataset", asyncHandler(async (req, res) => {
         seal_policy_id: policyId,
         price: String(body.metadata.price),
         quality_score: typeof quality.quality_score === "number" ? quality.quality_score : null,
+        original_filename: originalFilename || null,
+        content_type: contentType || null,
     });
     return res.json({
         dataset_id: dataset.id,
         blob_id,
         seal_policy_id: policyId,
-        upload_size: encryptedData.length,
+        upload_size: combined.length,
+        stored_size,
         metadata,
         ...quality
     });

@@ -11,6 +11,7 @@ const proof_1 = __importDefault(require("./api/proof"));
 const nautilus_1 = __importDefault(require("./api/nautilus"));
 const models_1 = require("./database/models");
 const datasets_1 = __importDefault(require("./api/datasets"));
+const zkemail_1 = __importDefault(require("./api/zkemail"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
@@ -23,6 +24,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/proof", proof_1.default);
 app.use("/api/nautilus", nautilus_1.default);
 app.use("/api/datasets", datasets_1.default);
+app.use("/api/zkemail", zkemail_1.default);
 // Upload and Purchase routers: load if present, else stub
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function safeLoadRouter(modulePath) {
@@ -39,6 +41,7 @@ function safeLoadRouter(modulePath) {
 }
 app.use("/api/upload", safeLoadRouter("./api/upload"));
 app.use("/api/purchase", safeLoadRouter("./api/purchase"));
+app.use("/api/walrus", safeLoadRouter("./api/walrus"));
 // 404 handler must be before error handler
 app.use(errorHandler_1.notFoundHandler);
 // Centralized error handler

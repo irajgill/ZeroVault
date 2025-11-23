@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SQL_CREATE_TABLE_PURCHASES = exports.SQL_CREATE_TABLE_PROOFS = exports.SQL_CREATE_TABLE_DATASETS = exports.SQL_ENABLE_PGCRYPTO = exports.pool = void 0;
+exports.SQL_CREATE_TABLE_EMAIL_ATTESTATIONS = exports.SQL_CREATE_TABLE_PURCHASES = exports.SQL_CREATE_TABLE_PROOFS = exports.SQL_ALTER_TABLE_DATASETS_ADD_CONTENT_TYPE = exports.SQL_ALTER_TABLE_DATASETS_ADD_ORIGINAL_FILENAME = exports.SQL_CREATE_TABLE_DATASETS = exports.SQL_ENABLE_PGCRYPTO = exports.pool = void 0;
 exports.ensureSchema = ensureSchema;
 exports.initializeDatabase = initializeDatabase;
 exports.createDataset = createDataset;
@@ -8,6 +8,8 @@ exports.getDatasetById = getDatasetById;
 exports.getAllDatasets = getAllDatasets;
 exports.createProof = createProof;
 exports.createPurchase = createPurchase;
+exports.createEmailAttestation = createEmailAttestation;
+exports.getEmailAttestationsForAddress = getEmailAttestationsForAddress;
 const pg_1 = require("pg");
 // Database pool configuration using either DATABASE_URL or discrete PG* env vars
 const poolConfig = process.env.DATABASE_URL
@@ -32,10 +34,20 @@ CREATE TABLE IF NOT EXISTS datasets (
   seal_policy_id TEXT NOT NULL,
   price BIGINT NOT NULL,
   quality_score INTEGER,
+  original_filename TEXT,
+  content_type TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_datasets_creator ON datasets(creator);
+`;
+exports.SQL_ALTER_TABLE_DATASETS_ADD_ORIGINAL_FILENAME = `
+ALTER TABLE datasets
+  ADD COLUMN IF NOT EXISTS original_filename TEXT;
+`;
+exports.SQL_ALTER_TABLE_DATASETS_ADD_CONTENT_TYPE = `
+ALTER TABLE datasets
+  ADD COLUMN IF NOT EXISTS content_type TEXT;
 `;
 exports.SQL_CREATE_TABLE_PROOFS = `
 CREATE TABLE IF NOT EXISTS proofs (
@@ -60,6 +72,19 @@ CREATE TABLE IF NOT EXISTS purchases (
 CREATE INDEX IF NOT EXISTS idx_purchases_dataset ON purchases(dataset_id);
 CREATE INDEX IF NOT EXISTS idx_purchases_buyer ON purchases(buyer_address);
 `;
+exports.SQL_CREATE_TABLE_EMAIL_ATTESTATIONS = `
+CREATE TABLE IF NOT EXISTS email_attestations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  address TEXT NOT NULL,
+  email_hash TEXT NOT NULL,
+  domain TEXT NOT NULL,
+  circuit_type TEXT NOT NULL,
+  transaction_digest TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_email_attestations_address ON email_attestations(address);
+CREATE INDEX IF NOT EXISTS idx_email_attestations_domain ON email_attestations(domain);
+`;
 /**
  * Creates required tables if they do not already exist.
  */
@@ -71,6 +96,10 @@ async function ensureSchema() {
         await client.query(exports.SQL_CREATE_TABLE_DATASETS);
         await client.query(exports.SQL_CREATE_TABLE_PROOFS);
         await client.query(exports.SQL_CREATE_TABLE_PURCHASES);
+        await client.query(exports.SQL_CREATE_TABLE_EMAIL_ATTESTATIONS);
+        // Safe, idempotent column additions for new metadata
+        await client.query(exports.SQL_ALTER_TABLE_DATASETS_ADD_ORIGINAL_FILENAME);
+        await client.query(exports.SQL_ALTER_TABLE_DATASETS_ADD_CONTENT_TYPE);
         await client.query("COMMIT");
     }
     catch (err) {
@@ -96,6 +125,8 @@ function mapDatasetRow(row) {
         seal_policy_id: row.seal_policy_id,
         price: String(row.price),
         quality_score: row.quality_score !== null ? Number(row.quality_score) : null,
+        original_filename: row.original_filename ?? null,
+        content_type: row.content_type ?? null,
         created_at: new Date(row.created_at),
         updated_at: new Date(row.updated_at),
     };
@@ -119,10 +150,21 @@ function mapPurchaseRow(row) {
         purchased_at: new Date(row.purchased_at),
     };
 }
+function mapEmailAttestationRow(row) {
+    return {
+        id: row.id,
+        address: row.address,
+        email_hash: row.email_hash,
+        domain: row.domain,
+        circuit_type: row.circuit_type,
+        transaction_digest: row.transaction_digest,
+        created_at: new Date(row.created_at),
+    };
+}
 async function createDataset(input) {
     const q = `
-    INSERT INTO datasets (name, description, creator, blob_id, seal_policy_id, price, quality_score)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO datasets (name, description, creator, blob_id, seal_policy_id, price, quality_score, original_filename, content_type)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *;
   `;
     const values = [
@@ -133,6 +175,8 @@ async function createDataset(input) {
         input.seal_policy_id,
         input.price,
         input.quality_score,
+        input.original_filename,
+        input.content_type,
     ];
     const result = await exports.pool.query(q, values);
     return mapDatasetRow(result.rows[0]);
@@ -177,4 +221,24 @@ async function createPurchase(input) {
     ];
     const result = await exports.pool.query(q, values);
     return mapPurchaseRow(result.rows[0]);
+}
+async function createEmailAttestation(input) {
+    const q = `
+    INSERT INTO email_attestations (address, email_hash, domain, circuit_type, transaction_digest)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *;
+  `;
+    const values = [
+        input.address.toLowerCase(),
+        input.email_hash,
+        input.domain.toLowerCase(),
+        input.circuit_type,
+        input.transaction_digest,
+    ];
+    const result = await exports.pool.query(q, values);
+    return mapEmailAttestationRow(result.rows[0]);
+}
+async function getEmailAttestationsForAddress(address) {
+    const result = await exports.pool.query(`SELECT * FROM email_attestations WHERE lower(address) = $1 ORDER BY created_at DESC;`, [address.toLowerCase()]);
+    return result.rows.map(mapEmailAttestationRow);
 }
