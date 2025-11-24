@@ -42,9 +42,12 @@ It combines **Walrus** blob storage, **Seal encryption & key wrapping**, **Circo
 - **Identity – zkEmail attestation**
   - On Dashboard, record a zkEmail‑style attestation by providing an email + Sui tx digest.  
   - Backend validates that the tx belongs to the caller and succeeded, then stores a hashed email + domain.  
-  - Datasets created by that address show “Verified @domain”, giving judges a concrete example of **privacy‑preserving identity** integrated with data provenance.
+  - Datasets created by that address show “Verified @domain”, which gives a concrete example of **privacy‑preserving identity** integrated with data provenance.
+
 
 ---
+
+
 
 ## Quick start (local dev)
 
@@ -71,6 +74,90 @@ For a detailed step‑by‑step including **Seal demo scripts** and **real on‑
 - **`sui-vktool/`** – Rust toolchain for converting snarkjs artifacts into Sui‑ready verification keys and proofs.  
 - **`docs/`** – Detailed getting‑started and demo scripts.
 
+
 ZeroVault is built to show **real cryptography, real infrastructure, and real UX** working together: encrypted Walrus blobs, Seal key wrapping, Nautilus attestation, zkEmail identity, and on‑chain Groth16 proofs, all wrapped in a polished dApp that user can click through in minutes.
 
+  ## Architecture Diagram
+
+```mermaid
+flowchart LR
+    subgraph Client["Client Browser"]
+        FE["Next.js Frontend<br/>(Upload, Marketplace, Dashboard)"]
+        WALLET["Sui Wallet Adapter"]
+    end
+
+    subgraph EC2["AWS EC2 Instance"]
+        subgraph BE["Node/Express Backend"]
+            API_UPLOAD["/api/upload"]
+            API_DATASETS["/api/datasets"]
+            API_ZKEMAIL["/api/zkemail"]
+            WALRUS_CLIENT["Walrus Client"]
+            SUI_CLIENT["Sui JSON-RPC Client"]
+        end
+
+        DB["PostgreSQL<br/>(datasets, proofs, purchases, email_attestations)"]
+
+        subgraph NAUTILUS["Nautilus TEE Service (Rust)"]
+            N_QUALITY["Quality Validator"]
+            N_WALRUS_CLIENT["Walrus HTTP Client"]
+        end
+    end
+
+    subgraph WALRUS["Walrus Testnet"]
+        W_PUBLISHER["Publisher API"]
+        W_AGGREGATOR["Aggregator / Walruscan"]
+    end
+
+    subgraph SUI["Sui Testnet"]
+        MOVE_MARKET["Move Module<br/>marketplace"]
+        MOVE_ZK["Move Module<br/>zk_verifier"]
+        PROOF_REG["ProofRegistry Object"]
+    end
+
+    subgraph ZKEMAIL["zkEmail Layer"]
+        EMAIL_USER["User Email"]
+        EMAIL_SERVER["Email Provider / Proof Gen (off-chain)"]
+    end
+
+    %% Frontend <-> Backend
+    FE -->|"Upload, list, buy, download, zkEmail APIs"| BE
+    FE -->|"Sign PTBs<br/>(list, purchase, verify proof)"| WALLET
+
+    %% Backend <-> DB
+    BE <-->|"store metadata, scores,<br/>purchases, attestations"| DB
+
+    %% Upload & Walrus
+    API_UPLOAD -->|"Seal-style encrypt & send ciphertext"| WALRUS_CLIENT
+    WALRUS_CLIENT -->|"PUT blob"| W_PUBLISHER
+    W_PUBLISHER -->|"blobId"| WALRUS_CLIENT
+    WALRUS_CLIENT -->|"blobId"| API_UPLOAD
+
+    %% Nautilus Quality
+    API_UPLOAD -->|"request quality check<br/>(blobId, hints)"| NAUTILUS
+    NAUTILUS -->|"GET blob (ciphertext)"| N_WALRUS_CLIENT
+    N_WALRUS_CLIENT --> W_AGGREGATOR
+    NAUTILUS -->|"quality score + attestation"| API_UPLOAD
+
+    %% ZK Proof & Sui
+    API_UPLOAD -->|"Groth16 proof prep"| SUI_CLIENT
+    SUI_CLIENT -->|"PTB: zk_verifier::verify_data_authenticity<br/>(vk, proof, publicInputs)"| MOVE_ZK
+    MOVE_ZK -->|"update"| PROOF_REG
+    SUI_CLIENT -->|"tx digest, status"| API_UPLOAD
+
+    %% Marketplace list & purchase
+    FE -->|"PTB: list & purchase calls"| MOVE_MARKET
+    MOVE_MARKET -->|"read / update listings,<br/>check PROOF_REG"| PROOF_REG
+
+    %% Secure download & decryption
+    API_DATASETS -->|"fetch blobId, wrapped key,<br/>original filename/type"| WALRUS_CLIENT
+    WALRUS_CLIENT --> W_AGGREGATOR
+    API_DATASETS --> FE
+    FE -->|"client-side decryption<br/>(Seal unwrap + decrypt)"| FE
+
+    %% zkEmail Attestations
+    EMAIL_USER --> EMAIL_SERVER
+    EMAIL_SERVER -->|"zkEmail-style proof + Sui tx"| FE
+    FE -->|"record attestation<br/>(address, email hash, domain, digest)"| API_ZKEMAIL
+    API_ZKEMAIL --> DB
+    FE -->|"fetch attestations"| API_ZKEMAIL
 
